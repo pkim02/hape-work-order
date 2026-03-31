@@ -2,7 +2,7 @@
   "buildCommand": "",
   "outputDirectory": "public",
   "functions": {
-    "api/**/*.py": {
+    "api/*.py": {
       "maxDuration": 60
     }
   }
