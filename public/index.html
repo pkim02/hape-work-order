@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HAPE 작업지시서 생성기</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Malgun Gothic', '맑은 고딕', -apple-system, sans-serif;
+    background: #f0f2f5;
+    color: #333;
+    min-height: 100vh;
+  }
+  .header {
+    background: #2c3e50;
+    color: white;
+    padding: 20px 0;
+    text-align: center;
+  }
+  .header h1 { font-size: 24px; font-weight: 700; }
+  .header p { font-size: 14px; color: #bdc3c7; margin-top: 4px; }
+  .container { max-width: 900px; margin: 0 auto; padding: 24px 16px; }
+
+  /* Upload area */
+  .upload-section {
+    background: white;
+    border-radius: 12px;
+    padding: 32px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    margin-bottom: 24px;
+  }
+  .upload-section h2 { font-size: 18px; margin-bottom: 16px; }
+  .client-input {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+    align-items: center;
+  }
+  .client-input label { font-weight: 600; white-space: nowrap; }
+  .client-input input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    font-size: 14px;
+  }
+  .dropzone {
+    border: 2px dashed #bdc3c7;
+    border-radius: 12px;
+    padding: 48px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: #fafafa;
+  }
+  .dropzone:hover, .dropzone.dragover {
+    border-color: #3498db;
+    background: #ebf5fb;
+  }
+  .dropzone p { color: #888; font-size: 15px; }
+  .dropzone .icon { font-size: 40px; margin-bottom: 8px; }
+  .dropzone input { display: none; }
+  .preview-row {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+  }
+  .preview-item {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 2px solid #dee2e6;
+  }
+  .preview-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .preview-item .remove {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    background: rgba(0,0,0,0.6);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    cursor: pointer;
+    font-size: 12px;
+    line-height: 22px;
+    text-align: center;
+  }
+  .btn {
+    display: inline-block;
+    padding: 12px 32px;
+    background: #2c3e50;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 16px;
+    transition: background 0.2s;
+  }
+  .btn:hover { background: #34495e; }
+  .btn:disabled { background: #95a5a6; cursor: not-allowed; }
+
+  /* Loading */
+  .loading {
+    display: none;
+    text-align: center;
+    padding: 40px;
+  }
+  .loading.active { display: block; }
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #dee2e6;
+    border-top-color: #3498db;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 12px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Results */
+  .results { display: none; }
+  .results.active { display: block; }
+  .result-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    margin-bottom: 24px;
+    overflow: hidden;
+  }
+  .result-card .card-header {
+    background: #2c3e50;
+    color: white;
+    padding: 16px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .result-card .card-header h3 { font-size: 16px; }
+  .result-card .card-body { padding: 24px; }
+
+  .info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  @media (max-width: 600px) {
+    .info-grid { grid-template-columns: 1fr; }
+  }
+  .info-item {
+    display: flex;
+    gap: 8px;
+    padding: 8px 12px;
+    background: #f8f9fa;
+    border-radius: 6px;
+  }
+  .info-item .label {
+    font-weight: 600;
+    color: #555;
+    white-space: nowrap;
+    min-width: 90px;
+  }
+
+  /* Color table */
+  .color-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 8px;
+  }
+  .color-table th {
+    background: #2c3e50;
+    color: white;
+    padding: 8px 12px;
+    text-align: left;
+    font-size: 13px;
+  }
+  .color-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid #eee;
+    font-size: 14px;
+  }
+  .color-table tr:nth-child(even) { background: #f8f9fa; }
+  .pending { color: #e67e22; font-weight: 600; }
+  .badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .badge-yes { background: #d4edda; color: #155724; }
+  .badge-no { background: #f8f9fa; color: #999; }
+  .notes-box {
+    background: #fff3cd;
+    border-left: 4px solid #ffc107;
+    padding: 12px 16px;
+    border-radius: 4px;
+    margin-top: 12px;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  .section-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 20px 0 8px;
+    padding-left: 10px;
+    border-left: 3px solid #3498db;
+  }
+  .section-title:first-child { margin-top: 0; }
+
+  .copy-btn {
+    padding: 6px 14px;
+    background: #3498db;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+  }
+  .copy-btn:hover { background: #2980b9; }
+
+  .error-msg {
+    display: none;
+    background: #f8d7da;
+    color: #721c24;
+    padding: 16px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+  }
+  .error-msg.active { display: block; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>HAPE 작업지시서 생성기</h1>
+  <p>제품 이미지를 업로드하면 작업지시서를 자동 생성합니다</p>
+</div>
+
+<div class="container">
+  <!-- Upload -->
+  <div class="upload-section">
+    <h2>이미지 업로드</h2>
+    <div class="client-input">
+      <label for="clientName">클라이언트:</label>
+      <input type="text" id="clientName" placeholder="예: 금볕 주식회사" value="">
+    </div>
+    <div class="dropzone" id="dropzone">
+      <div class="icon">+</div>
+      <p>이미지를 드래그하거나 클릭하여 업로드</p>
+      <p style="font-size:12px; color:#aaa; margin-top:4px;">JPG, PNG, WebP, GIF</p>
+      <input type="file" id="fileInput" accept="image/*" multiple>
+    </div>
+    <div class="preview-row" id="previewRow"></div>
+    <button class="btn" id="analyzeBtn" disabled>분석 시작</button>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    <p>Claude AI로 이미지 분석 중...</p>
+    <p style="font-size:13px; color:#888; margin-top:4px;" id="loadingProgress"></p>
+  </div>
+
+  <!-- Error -->
+  <div class="error-msg" id="errorMsg"></div>
+
+  <!-- Results -->
+  <div class="results" id="results"></div>
+</div>
+
+<script>
+const dropzone = document.getElementById('dropzone');
+const fileInput = document.getElementById('fileInput');
+const previewRow = document.getElementById('previewRow');
+const analyzeBtn = document.getElementById('analyzeBtn');
+const loading = document.getElementById('loading');
+const errorMsg = document.getElementById('errorMsg');
+const resultsDiv = document.getElementById('results');
+const loadingProgress = document.getElementById('loadingProgress');
+
+let files = [];
+
+// Drag and drop
+dropzone.addEventListener('click', () => fileInput.click());
+dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('dragover'); });
+dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+dropzone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropzone.classList.remove('dragover');
+  addFiles(e.dataTransfer.files);
+});
+fileInput.addEventListener('change', e => addFiles(e.target.files));
+
+function addFiles(newFiles) {
+  for (const f of newFiles) {
+    if (f.type.startsWith('image/')) files.push(f);
+  }
+  renderPreviews();
+}
+
+function renderPreviews() {
+  previewRow.innerHTML = '';
+  files.forEach((f, i) => {
+    const div = document.createElement('div');
+    div.className = 'preview-item';
+    const img = document.createElement('img');
+    img.src = URL.createObjectURL(f);
+    const btn = document.createElement('button');
+    btn.className = 'remove';
+    btn.textContent = 'X';
+    btn.onclick = () => { files.splice(i, 1); renderPreviews(); };
+    div.appendChild(img);
+    div.appendChild(btn);
+    previewRow.appendChild(div);
+  });
+  analyzeBtn.disabled = files.length === 0;
+}
+
+// File to base64
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+// Analyze
+analyzeBtn.addEventListener('click', async () => {
+  if (files.length === 0) return;
+
+  const clientName = document.getElementById('clientName').value || '미지정';
+
+  loading.classList.add('active');
+  errorMsg.classList.remove('active');
+  resultsDiv.classList.remove('active');
+  resultsDiv.innerHTML = '';
+  analyzeBtn.disabled = true;
+
+  const results = [];
+
+  for (let i = 0; i < files.length; i++) {
+    loadingProgress.textContent = `(${i + 1}/${files.length}) ${files[i].name}`;
+    try {
+      const b64 = await fileToBase64(files[i]);
+      const mediaType = files[i].type || 'image/jpeg';
+
+      const resp = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          image_b64: b64,
+          media_type: mediaType,
+          client_name: clientName,
+        }),
+      });
+
+      if (!resp.ok) throw new Error(`서버 오류 (${resp.status})`);
+      const data = await resp.json();
+      if (data.error) throw new Error(data.error);
+
+      results.push({ filename: files[i].name, imgUrl: URL.createObjectURL(files[i]), data });
+    } catch (e) {
+      results.push({ filename: files[i].name, error: e.message });
+    }
+  }
+
+  loading.classList.remove('active');
+  analyzeBtn.disabled = false;
+  renderResults(results);
+});
+
+function badge(val) {
+  return val
+    ? '<span class="badge badge-yes">있음</span>'
+    : '<span class="badge badge-no">없음</span>';
+}
+
+function renderResults(results) {
+  resultsDiv.innerHTML = '';
+
+  results.forEach((r, idx) => {
+    if (r.error) {
+      resultsDiv.innerHTML += `
+        <div class="error-msg active" style="margin-bottom:16px;">
+          <strong>${r.filename}</strong>: ${r.error}
+        </div>`;
+      return;
+    }
+
+    const d = r.data;
+    const a = d.analysis;
+
+    const colorRows = d.color_matches.map(c => `
+      <tr>
+        <td>${c.category}</td>
+        <td>${c.color_name}</td>
+        <td>${c.merida_code ? c.merida_code : '<span class="pending">PENDING</span>'}</td>
+        <td>${c.suggested_page || '-'}</td>
+      </tr>
+    `).join('');
+
+    const card = `
+    <div class="result-card" id="card-${idx}">
+      <div class="card-header">
+        <h3>${r.filename} - 작업지시서</h3>
+        <button class="copy-btn" onclick="copyCard(${idx})">복사</button>
+      </div>
+      <div class="card-body">
+        <div style="display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap;">
+          <img src="${r.imgUrl}" style="width:120px;height:120px;object-fit:cover;border-radius:8px;border:1px solid #dee2e6;">
+          <div>
+            <p><strong>날짜:</strong> ${d.generated_at}</p>
+            <p><strong>클라이언트:</strong> ${d.client_name}</p>
+          </div>
+        </div>
+
+        <div class="section-title">제품 정보</div>
+        <div class="info-grid">
+          <div class="info-item"><span class="label">제품 유형</span><span>${a.product_type}</span></div>
+          <div class="info-item"><span class="label">예상 크기</span><span>${a.size_estimate_cm} cm</span></div>
+        </div>
+
+        <div class="section-title">원단 정보</div>
+        <div class="info-grid">
+          <div class="info-item"><span class="label">원단 종류</span><span>${a.fabric_type}</span></div>
+          <div class="info-item"><span class="label">촉감/텍스처</span><span>${a.fabric_texture}</span></div>
+          <div class="info-item"><span class="label">복잡도</span><span>${a.complexity_kr}</span></div>
+        </div>
+
+        <div class="section-title">색상 정보 (메리다 컬러북)</div>
+        <table class="color-table">
+          <tr><th>구분</th><th>색상</th><th>메리다 코드</th><th>페이지</th></tr>
+          ${colorRows}
+        </table>
+
+        <div class="section-title">세부 사항</div>
+        <div class="info-grid">
+          <div class="info-item"><span class="label">눈 유형</span><span>${a.eye_type}</span></div>
+          <div class="info-item"><span class="label">자수</span>${badge(a.has_embroidery)}</div>
+          <div class="info-item"><span class="label">코스튬</span>${badge(a.has_costume)}</div>
+          <div class="info-item"><span class="label">액세서리</span>${badge(a.has_accessories)}</div>
+        </div>
+
+        ${a.notes ? `<div class="section-title">비고</div><div class="notes-box">${a.notes}</div>` : ''}
+      </div>
+    </div>`;
+
+    resultsDiv.innerHTML += card;
+  });
+
+  resultsDiv.classList.add('active');
+}
+
+function copyCard(idx) {
+  const card = document.getElementById(`card-${idx}`);
+  const text = card.innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = card.querySelector('.copy-btn');
+    btn.textContent = '복사됨!';
+    setTimeout(() => btn.textContent = '복사', 1500);
+  });
+}
+</script>
+</body>
+</html>

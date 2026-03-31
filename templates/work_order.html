@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>작업지시서</title>
+</head>
+<body style="font-family: 'Malgun Gothic', '맑은 고딕', Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; color: #333; line-height: 1.6;">
+
+<!-- 헤더 -->
+<div style="border-bottom: 3px solid #2c3e50; padding-bottom: 15px; margin-bottom: 25px;">
+  <h1 style="margin: 0; color: #2c3e50; font-size: 28px;">작업지시서 (Work Order)</h1>
+  <table style="margin-top: 10px; font-size: 14px;">
+    <tr>
+      <td style="padding-right: 20px; color: #666;">날짜:</td>
+      <td><strong>{{ wo.generated_at.strftime('%Y-%m-%d %H:%M') }}</strong></td>
+    </tr>
+    <tr>
+      <td style="padding-right: 20px; color: #666;">클라이언트:</td>
+      <td><strong>{{ wo.client_name }}</strong></td>
+    </tr>
+  </table>
+</div>
+
+<!-- 제품 정보 -->
+<h2 style="color: #2c3e50; font-size: 18px; border-left: 4px solid #3498db; padding-left: 10px; margin-top: 25px;">
+  &#9632; 제품 정보 (Product Info)
+</h2>
+<table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+  <tr style="background: #f8f9fa;">
+    <td style="padding: 8px 12px; border: 1px solid #dee2e6; width: 30%; font-weight: bold; color: #555;">제품 유형</td>
+    <td style="padding: 8px 12px; border: 1px solid #dee2e6;">{{ a.product_type }}</td>
+  </tr>
+  <tr>
+    <td style="padding: 8px 12px; border: 1px solid #dee2e6; font-weight: bold; color: #555;">예상 크기</td>
+    <td style="padding: 8px 12px; border: 1px solid #dee2e6;">{{ a.size_estimate_cm }} cm</td>
+  </tr>
+</table>
+
+<!-- 원단 정보 -->
+<h2 style="color: #2c3e50; font-size: 18px; border-left: 4px solid #3498db; padding-left: 10px; margin-top: 25px;">
+  &#9632; 원단 정보 (Fabric Info)
+</h2>
+<table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+  <tr style="background: #f8f9fa;">
+    <td style="padding: 8px 12px; border: 1px solid #dee2e6; width: 30%; font-weight: bold; color: #555;">원단 종류</td>
+    <td style="padding: 8px 12px; border: 1px solid #dee2e6;">{{ a.fabric_type }}</td>
+  </tr>
+  <tr>
+    <td style="padding: 8px 12px; border: 1px solid #dee2e6; font-weight: bold; color: #555;">촉감/텍스처</td>
+    <td style="padding: 8px 12px; border: 1px solid #dee2e6;">{{ a.fabric_texture }}</td>
+  </tr>
+  <tr style="background: #f8f9fa;">
+    <td style="padding: 8px 12px; border: 1px solid #dee2e6; font-weight: bold; color: #555;">복잡도</td>
+    <td style="padding: 8px 12px; border: 1px solid #dee2e6;">{{ a.complexity | complexity_kr }}</td>
+  </tr>
+</table>
+
+<!-- 색상 정보 -->
+<h2 style="color: #2c3e50; font-size: 18px; border-left: 4px solid #3498db; padding-left: 10px; margin-top: 25px;">
+  &#9632; 색상 정보 (Color Info)
+</h2>
+<table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+  <tr style="background: #2c3e50; color: white;">
+    <th style="padding: 8px 12px; border: 1px solid #dee2e6; text-align: left;">구분</th>
+    <th style="padding: 8px 12px; border: 1px solid #dee2e6; text-align: left;">색상</th>
+    <th style="padding: 8px 12px; border: 1px solid #dee2e6; text-align: left;">메리다 코드</th>
+    <th style="padding: 8px 12px; border: 1px solid #dee2e6; text-align: left;">페이지</th>
+  </tr>
+  {% for cm in colors %}
+  <tr style="{% if loop.index is odd %}background: #f8f9fa;{% endif %}">
+    <td style="padding: 8px 12px; border: 1px solid #dee2e6;">
+      {% if cm.original_color in a.primary_colors %}주요{% else %}보조{% endif %}
+    </td>
+    <td style="padding: 8px 12px; border: 1px solid #dee2e6;">{{ cm.color_name }}</td>
+    <td style="padding: 8px 12px; border: 1px solid #dee2e6;">
+      {% if cm.merida_code %}{{ cm.merida_code }}{% else %}<span style="color: #e67e22;">PENDING</span>{% endif %}
+    </td>
+    <td style="padding: 8px 12px; border: 1px solid #dee2e6;">
+      {% if cm.suggested_page %}{{ cm.suggested_page }}{% else %}-{% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+
+<!-- 세부 사항 -->
+<h2 style="color: #2c3e50; font-size: 18px; border-left: 4px solid #3498db; padding-left: 10px; margin-top: 25px;">
+  &#9632; 세부 사항 (Details)
+</h2>
+<table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+  <tr style="background: #f8f9fa;">
+    <td style="padding: 8px 12px; border: 1px solid #dee2e6; width: 30%; font-weight: bold; color: #555;">눈 유형</td>
+    <td style="padding: 8px 12px; border: 1px solid #dee2e6;">{{ a.eye_type }}</td>
+  </tr>
+  <tr>
+    <td style="padding: 8px 12px; border: 1px solid #dee2e6; font-weight: bold; color: #555;">자수</td>
+    <td style="padding: 8px 12px; border: 1px solid #dee2e6;">{{ a.has_embroidery | bool_kr }}</td>
+  </tr>
+  <tr style="background: #f8f9fa;">
+    <td style="padding: 8px 12px; border: 1px solid #dee2e6; font-weight: bold; color: #555;">코스튬</td>
+    <td style="padding: 8px 12px; border: 1px solid #dee2e6;">{{ a.has_costume | bool_kr }}</td>
+  </tr>
+  <tr>
+    <td style="padding: 8px 12px; border: 1px solid #dee2e6; font-weight: bold; color: #555;">액세서리</td>
+    <td style="padding: 8px 12px; border: 1px solid #dee2e6;">{{ a.has_accessories | bool_kr }}</td>
+  </tr>
+</table>
+
+<!-- 비고 -->
+{% if a.notes %}
+<h2 style="color: #2c3e50; font-size: 18px; border-left: 4px solid #3498db; padding-left: 10px; margin-top: 25px;">
+  &#9632; 비고 (Notes)
+</h2>
+<div style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 4px; padding: 12px; margin-bottom: 20px;">
+  {{ a.notes }}
+</div>
+{% endif %}
+
+<!-- 원본 이미지 -->
+<h2 style="color: #2c3e50; font-size: 18px; border-left: 4px solid #3498db; padding-left: 10px; margin-top: 25px;">
+  &#9632; 원본 이미지
+</h2>
+<p style="color: #666; font-size: 14px;">첨부 파일: {{ wo.image_path }}</p>
+
+<!-- 푸터 -->
+<div style="border-top: 1px solid #dee2e6; padding-top: 15px; margin-top: 30px; text-align: center; color: #999; font-size: 12px;">
+  Generated by HAPE Work Order Generator
+</div>
+
+</body>
+</html>
